@@ -23,6 +23,13 @@
         "vite": "^3.1.0"
     },
     "dependencies": {
+        "@svelteuidev/composables": "^0.8.0",
+        "@svelteuidev/core": "^0.8.0",
+        "@svelteuidev/dates": "^0.8.0",
+        "@svelteuidev/motion": "^0.8.0",
+        "@svelteuidev/preprocessors": "^0.8.0",
+        "@svelteuidev/prism": "^0.8.0",
+        "dayjs": "^1.11.7",
         "firebase": "^9.15.0",
         "modern-normalize": "^1.1.0"
     }

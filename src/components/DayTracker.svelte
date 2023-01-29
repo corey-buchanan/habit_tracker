@@ -1,60 +1,88 @@
 <script>
-    import { readUserData, writeUserData } from "./Database.svelte";
+    import { readUserData, writeUserData } from './Database.svelte';
+    import { Checkbox, Loader } from '@svelteuidev/core';
 
     let today = new Date(Date.now());
     let selectedDate = new Date(today);
     let selectedDateString = "Today";
 
-    let habits = [];
-    
-    //readUserData("habits", (val) => { habits = val; });
+    let formatDate = (date, delim = '-') => {
+        return `${date.getMonth() + 1}${delim}${date.getDate()}${delim}${date.getFullYear()}`;
+    }
+
+    let isToday = () => {
+        return formatDate(selectedDate) === formatDate(today);
+    }
 
     let incrementDate = (numDays) => {
         selectedDate.setDate(selectedDate.getDate() + numDays);
-        if (selectedDate.getDate() === today.getDate() &&
-            selectedDate.getMonth() === today.getMonth() &&
-            selectedDate.getFullYear() === today.getFullYear()) {
+        if (isToday()) {
             selectedDateString = "Today";
         }
         else {
-            selectedDateString = selectedDate.getMonth() + 1 + "/" + selectedDate.getDate() + "/" + selectedDate.getFullYear();
+            selectedDateString = formatDate(selectedDate, '/');
         }
     }
+
+    let retrievedHabits = false;
+    let habits = [];
+
+    readUserData("habits", (response) => {
+        if (response != null) {
+            let allHabits = Object.keys(response).map(habit => {
+                return response[habit];
+            });
+            habits = allHabits;
+        }
+        retrievedHabits = true;
+    });
+
+    $: habits && uploadHabits();
 
     let newHabit = "";
 
     let addHabit = () => {
         habits = [...habits, {name: newHabit, completed: false}];
         newHabit = "";
-        console.log(habits);
     }
 
-    let uploadData = () => {
-        //writeUserData("habits", habits);
+    let uploadHabits = () => {
+        if (!retrievedHabits) return;
+        writeUserData("habits", habits);
     }
+
+    
 
 </script>
 
 <div id="container">
     <div id="date-navbar">
-        <button class="arrow"><img class="arrow" alt="Left Arrow" src="left-arrow.svg" on:click={() => incrementDate(-1)}/></button>
+        <button class="arrow" on:click={() => incrementDate(-1)}>
+            <img class="arrow" alt="Left Arrow" src="left-arrow.svg" />
+        </button>
         <h2>{selectedDateString}</h2>
-        <button class="arrow"><img class="arrow" alt="Left Arrow" src="right-arrow.svg" on:click={() => incrementDate(1)}/></button>
+        <button class="arrow" disabled={selectedDateString === "Today"} on:click={() => incrementDate(1)}>
+            <img class="arrow" alt="Left Arrow" src="right-arrow.svg" />
+        </button>
     </div>
     
     <hr>
 
     <ul>
-        {#each habits as habit}
-        <li>
-            <span>{habit.name}</span>
-            <div style="flex-grow: 1"></div>
-            <input type="checkbox" bind:checked={habit.completed} on:change={uploadData}/>
-        </li>
-        {/each}
+        {#if retrievedHabits}
+            {#each habits as habit}
+            <li>
+                <span>{habit.name}</span>
+                <div style="flex-grow: 1"></div>
+                <Checkbox color="var(--peach)" bind:checked={habit.completed} />
+            </li>
+            {/each}
+        {:else}
+            <li><div style="margin: auto"><Loader variant="dots" color="orange"/></div></li>
+        {/if}
         <li>
             <form on:submit|preventDefault={addHabit}>
-                <input type="text" id="new-habit" placeholder="New habit..." bind:value={newHabit}/>
+                <input disabled={!retrievedHabits} type="text" id="new-habit" placeholder="New habit..." bind:value={newHabit}/>
             </form>
         </li>
     </ul>
@@ -110,5 +138,8 @@
     }
     #new-habit {
         outline: none;
+    }
+    #new-habit:disabled {
+        background-color: white;
     }
 </style>
